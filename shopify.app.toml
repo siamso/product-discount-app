@@ -3,7 +3,7 @@
 client_id = "a5e46081baeb482d1b79a9d66561d942"
 name = "product-discount-app"
 handle = "product-discount-app-253"
-application_url = "https://5407b00c3420.ngrok-free.app"
+application_url = "https://percent-alpha-puzzle-four.trycloudflare.com"
 embedded = true
 
 [build]
@@ -18,7 +18,7 @@ api_version = "2025-07"
 scopes = "read_products,write_products"
 
 [auth]
-redirect_urls = ["https://5407b00c3420.ngrok-free.app/auth/callback", "https://5407b00c3420.ngrok-free.app/auth/shopify/callback", "https://5407b00c3420.ngrok-free.app/api/auth/callback"]
+redirect_urls = ["https://percent-alpha-puzzle-four.trycloudflare.com/auth/callback", "https://percent-alpha-puzzle-four.trycloudflare.com/auth/shopify/callback", "https://percent-alpha-puzzle-four.trycloudflare.com/api/auth/callback"]
 
 [pos]
 embedded = false

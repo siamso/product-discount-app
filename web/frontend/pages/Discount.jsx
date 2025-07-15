@@ -12,7 +12,6 @@ import {
   InlineStack,
   Badge,
   Modal,
-  Loading,
   EmptyState,
   ResourceList,
   ResourceItem,
@@ -35,61 +34,97 @@ const Discount = () => {
   const [discountValue, setDiscountValue] = useState("");
   const [editingBundle, setEditingBundle] = useState(null);
 
-  ///for now inital data to for testing
   useEffect(() => {
-    setProducts([
-      {
-        id: "1",
-        title: "iPhone 15 Pro",
-        price: 999.99,
-        image: "https://via.placeholder.com/40",
-      },
-      {
-        id: "2",
-        title: "MacBook Air M2",
-        price: 1299.99,
-        image: "https://via.placeholder.com/40",
-      },
-      {
-        id: "3",
-        title: "AirPods Pro",
-        price: 249.99,
-        image: "https://via.placeholder.com/40",
-      },
-      {
-        id: "4",
-        title: "iPad Pro",
-        price: 799.99,
-        image: "https://via.placeholder.com/40",
-      },
-      {
-        id: "5",
-        title: "Apple Watch",
-        price: 399.99,
-        image: "https://via.placeholder.com/40",
-      },
-    ]);
+    fetch("/api/bundles")
+      .then((res) => res.json())
+      .then((data) => {
+        const formatted = data.map((bundle) => ({
+          ...bundle,
+          products:
+            typeof bundle.products === "string"
+              ? JSON.parse(bundle.products)
+              : bundle.products,
+        }));
+        setBundles(formatted);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch bundles:", err);
+      });
+    //initial data to for testing
+    // setProducts([
+    //   {
+    //     id: "1",
+    //     title: "iPhone 15 Pro",
+    //     price: 999.99,
+    //     image: "https://via.placeholder.com/40",
+    //   },
+    //   {
+    //     id: "2",
+    //     title: "MacBook Air M2",
+    //     price: 1299.99,
+    //     image: "https://via.placeholder.com/40",
+    //   },
+    //   {
+    //     id: "3",
+    //     title: "AirPods Pro",
+    //     price: 249.99,
+    //     image: "https://via.placeholder.com/40",
+    //   },
+    //   {
+    //     id: "4",
+    //     title: "iPad Pro",
+    //     price: 799.99,
+    //     image: "https://via.placeholder.com/40",
+    //   },
+    //   {
+    //     id: "5",
+    //     title: "Apple Watch",
+    //     price: 399.99,
+    //     image: "https://via.placeholder.com/40",
+    //   },
+    // ]);
+    // setBundles([
+    //   {
+    //     id: 1,
+    //     name: "Apple Bundle Deal",
+    //     products: ["iPhone 15 Pro", "AirPods Pro"],
+    //     discountType: "percentage",
+    //     discountValue: 15,
+    //     isActive: true,
+    //     totalValue: 1249.98,
+    //   },
+    //   {
+    //     id: 2,
+    //     name: "Work From Home Bundle",
+    //     products: ["MacBook Air M2", "iPad Pro"],
+    //     discountType: "fixed",
+    //     discountValue: 200,
+    //     isActive: true,
+    //     totalValue: 2099.98,
+    //   },
+    // ]);
+  }, []);
 
-    setBundles([
-      {
-        id: 1,
-        name: "Apple Bundle Deal",
-        products: ["iPhone 15 Pro", "AirPods Pro"],
-        discountType: "percentage",
-        discountValue: 15,
-        isActive: true,
-        totalValue: 1249.98,
-      },
-      {
-        id: 2,
-        name: "Work From Home Bundle",
-        products: ["MacBook Air M2", "iPad Pro"],
-        discountType: "fixed",
-        discountValue: 200,
-        isActive: true,
-        totalValue: 2099.98,
-      },
-    ]);
+  useEffect(() => {
+    setLoading(true);
+    fetch("/api/products")
+      .then((res) => res.json())
+      .then((data) => {
+        const formattedProducts = data.map((product) => ({
+          id: product.id.toString(),
+          title: product.title,
+          price: product.variants?.[0]?.price
+            ? parseFloat(product.variants[0].price)
+            : 0,
+          image: product.image?.src || "https://via.placeholder.com/40",
+        }));
+        setProducts(formattedProducts);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setLoading(false);
+        console.log(err.message);
+      });
   }, []);
 
   const handleProductSelection = (productId) => {
@@ -116,20 +151,13 @@ const Discount = () => {
     }
   };
 
-  const handleSaveBundle = () => {
+  const handleSaveBundle = async () => {
     if (!bundleName || selectedProducts.length < 2 || !discountValue) {
       console.log("had problem");
       return;
-      //   return (
-      //     <Toast
-      //       content="Please fill all required fields and select at least 2 products"
-      //       isError={true}
-      //     />
-      //   );
     }
 
     const newBundle = {
-      id: editingBundle?.id || Date.now(),
       name: bundleName,
       products: selectedProducts.map(
         (id) => products.find((p) => p.id === id)?.title
@@ -140,17 +168,41 @@ const Discount = () => {
       totalValue: calculateTotalPrice(),
     };
 
-    if (editingBundle) {
-      setBundles((prev) =>
-        prev.map((b) => (b.id === editingBundle.id ? newBundle : b))
-      );
-      //   return <Toast content="Bundle updated successfully!" />;
-    } else {
-      setBundles((prev) => [...prev, newBundle]);
-    }
+    try {
+      let response;
+      if (editingBundle) {
+        response = await fetch(`/api/bundles/${editingBundle.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newBundle),
+        });
+      } else {
+        response = await fetch("/api/bundles", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newBundle),
+        });
+      }
 
-    resetForm();
-    setShowCreateModal(false);
+      if (response.ok) {
+        if (editingBundle) {
+          setBundles((prev) =>
+            prev.map((b) =>
+              b.id === editingBundle.id ? { ...b, ...newBundle } : b
+            )
+          );
+        } else {
+          setBundles((prev) => [...prev, { id: Date.now(), ...newBundle }]);
+        }
+        resetForm();
+        setShowCreateModal(false);
+      } else {
+        const error = await response.json();
+        console.error("Failed to save bundle:", error);
+      }
+    } catch (err) {
+      console.error("Error saving bundle:", err);
+    }
   };
 
   const resetForm = () => {
@@ -174,14 +226,47 @@ const Discount = () => {
     setShowCreateModal(true);
   };
 
-  const handleDeleteBundle = (bundleId) => {
-    setBundles((prev) => prev.filter((b) => b.id !== bundleId));
+  const handleDeleteBundle = async (bundleId) => {
+    try {
+      const response = await fetch(`/api/bundles/${bundleId}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setBundles((prev) => prev.filter((b) => b.id !== bundleId));
+      } else {
+        const error = await response.json();
+        console.error("Failed to delete bundle:", error);
+      }
+    } catch (err) {
+      console.error("Error deleting bundle:", err);
+    }
   };
 
-  const toggleBundleStatus = (bundleId) => {
-    setBundles((prev) =>
-      prev.map((b) => (b.id === bundleId ? { ...b, isActive: !b.isActive } : b))
-    );
+  const toggleBundleStatus = async (bundleId) => {
+    const bundle = bundles.find((b) => b.id === bundleId);
+    if (!bundle) return;
+
+    const updatedBundle = { ...bundle, isActive: !bundle.isActive };
+
+    try {
+      const response = await fetch(`/api/bundles/${bundleId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedBundle),
+      });
+      if (response.ok) {
+        setBundles((prev) =>
+          prev.map((b) =>
+            b.id === bundleId ? { ...b, isActive: updatedBundle.isActive } : b
+          )
+        );
+      } else {
+        const error = await response.json();
+        console.error("Failed to update bundle status:", error);
+      }
+    } catch (err) {
+      console.error("Error updating bundle status:", err);
+    }
   };
 
   return (
@@ -360,7 +445,7 @@ const Discount = () => {
                       <Avatar source={product.image} size="lg" />
                       <BlockStack>
                         <Text>{product.title}</Text>
-                        <Text tone="subdued">${product.price}</Text>
+                        <Text tone="subdued">Tk{product.price}</Text>
                       </BlockStack>
                     </BlockStack>
                   ))}
@@ -432,7 +517,7 @@ const Discount = () => {
         </Modal.Section>
       </Modal>
 
-      {loading && <Loading />}
+      {loading && <div>Loading....</div>}
     </Page>
   );
 };
