@@ -3,7 +3,7 @@
 client_id = "a5e46081baeb482d1b79a9d66561d942"
 name = "product-discount-app"
 handle = "product-discount-app-253"
-application_url = "https://51fe64a8f0a0.ngrok-free.app"
+application_url = "https://5407b00c3420.ngrok-free.app"
 embedded = true
 
 [build]
@@ -15,10 +15,10 @@ api_version = "2025-07"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
+scopes = "read_products,write_products"
 
 [auth]
-redirect_urls = ["https://51fe64a8f0a0.ngrok-free.app/auth/callback", "https://51fe64a8f0a0.ngrok-free.app/auth/shopify/callback", "https://51fe64a8f0a0.ngrok-free.app/api/auth/callback"]
+redirect_urls = ["https://5407b00c3420.ngrok-free.app/auth/callback", "https://5407b00c3420.ngrok-free.app/auth/shopify/callback", "https://5407b00c3420.ngrok-free.app/api/auth/callback"]
 
 [pos]
 embedded = false

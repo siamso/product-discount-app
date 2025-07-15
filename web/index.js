@@ -27,8 +27,13 @@ const STATIC_PATH =
 
 const app = express();
 
-//database
-initDatabase();
+// Initialize database
+try {
+  initDatabase();
+  console.log("Database initialized successfully");
+} catch (error) {
+  console.error("Failed to initialize database:", error);
+}
 
 // Set up Shopify authentication and webhook handling
 app.get(shopify.config.auth.path, shopify.auth.begin());
@@ -45,6 +50,7 @@ app.post(
 // If you are adding routes outside of the /api path, remember to
 // also add a proxy rule for them in web/frontend/vite.config.js
 
+app.use(express.json());
 app.use("/api/*", shopify.validateAuthenticatedSession());
 
 app.post("/api/price-rule", async (req, res) => {
@@ -84,7 +90,6 @@ app.post("/api/price-rule", async (req, res) => {
     res.status(500).json({ success: false, error: e.message });
   }
 });
-app.use(express.json());
 
 // Get all products
 app.get("/api/products", async (req, res) => {
@@ -166,35 +171,35 @@ app.delete("/api/bundles/:id", async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
-app.get("/api/products/count", async (_req, res) => {
-  const client = new shopify.api.clients.Graphql({
-    session: res.locals.shopify.session,
-  });
+// app.get("/api/products/count", async (_req, res) => {
+//   const client = new shopify.api.clients.Graphql({
+//     session: res.locals.shopify.session,
+//   });
 
-  const countData = await client.request(`
-    query shopifyProductCount {
-      productsCount {
-        count
-      }
-    }
-  `);
+//   const countData = await client.request(`
+//     query shopifyProductCount {
+//       productsCount {
+//         count
+//       }
+//     }
+//   `);
 
-  res.status(200).send({ count: countData.data.productsCount.count });
-});
+//   res.status(200).send({ count: countData.data.productsCount.count });
+// });
 
-app.post("/api/products", async (_req, res) => {
-  let status = 200;
-  let error = null;
+// app.post("/api/products", async (_req, res) => {
+//   let status = 200;
+//   let error = null;
 
-  try {
-    await productCreator(res.locals.shopify.session);
-  } catch (e) {
-    console.log(`Failed to process products/create: ${e.message}`);
-    status = 500;
-    error = e.message;
-  }
-  res.status(status).send({ success: status === 200, error });
-});
+//   try {
+//     await productCreator(res.locals.shopify.session);
+//   } catch (e) {
+//     console.log(`Failed to process products/create: ${e.message}`);
+//     status = 500;
+//     error = e.message;
+//   }
+//   res.status(status).send({ success: status === 200, error });
+// });
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));

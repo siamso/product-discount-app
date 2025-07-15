@@ -31,20 +31,28 @@ export const initDatabase = () => {
 };
 
 const createTables = () => {
-  const schemaPath = join(__dirname, "schema.sql");
-  const schema = readFileSync(schemaPath, "utf8");
+  try {
+    const schemaPath = join(__dirname, "schema.sql");
+    const schema = readFileSync(schemaPath, "utf8");
 
-  db.exec(schema, (err) => {
-    if (err) {
-      console.error("Error creating tables:", err);
-      return;
-    }
-    console.log("Database tables created successfully");
-  });
+    db.exec(schema, (err) => {
+      if (err) {
+        console.error("Error creating tables:", err);
+        return;
+      }
+      console.log("Database tables created successfully");
+    });
+  } catch (error) {
+    console.error("Error reading schema file:", error);
+  }
 };
 
 export const runQuery = (sql, params = []) => {
   return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
     db.run(sql, params, function (err) {
       if (err) {
         reject(err);
@@ -57,6 +65,10 @@ export const runQuery = (sql, params = []) => {
 
 export const getRow = (sql, params = []) => {
   return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
     db.get(sql, params, (err, row) => {
       if (err) {
         reject(err);
@@ -69,6 +81,10 @@ export const getRow = (sql, params = []) => {
 
 export const getAllRows = (sql, params = []) => {
   return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
     db.all(sql, params, (err, rows) => {
       if (err) {
         reject(err);
