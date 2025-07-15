@@ -3,7 +3,14 @@ import { join } from "path";
 import { readFileSync } from "fs";
 import express from "express";
 import serveStatic from "serve-static";
-
+import {
+  initDatabase,
+  runQuery,
+  getRow,
+  getAllRows,
+  runTransaction,
+  closeDatabase,
+} from "./database.js";
 import shopify from "./shopify.js";
 import productCreator from "./product-creator.js";
 import PrivacyWebhookHandlers from "./privacy.js";
@@ -19,6 +26,9 @@ const STATIC_PATH =
     : `${process.cwd()}/frontend/`;
 
 const app = express();
+
+//database
+initDatabase();
 
 // Set up Shopify authentication and webhook handling
 app.get(shopify.config.auth.path, shopify.auth.begin());

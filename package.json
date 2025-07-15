@@ -11,7 +11,6 @@
     "generate": "shopify app generate",
     "deploy": "shopify app deploy"
   },
-  "dependencies": {},
   "author": "siamsoo",
   "private": true,
   "workspaces": [
